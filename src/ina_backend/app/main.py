@@ -35,7 +35,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(policy.router, prefix="/api/v1/policy", tags=["Policy"])
 app.include_router(tenant_config.router, prefix="/api/v1/tenant", tags=["Tenant Config"])
 app.include_router(session.router, prefix="/api/v1/session", tags=["Session"])
-app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Session"])
+app.include_router(analytics.router, prefix="/api/v1/analytics", tags=["Analytics"])
 
 
 @app.get("/")

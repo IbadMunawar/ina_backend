@@ -53,3 +53,9 @@ class AnalyticsLogCreate(BaseModel):
     result: str           # e.g., "DEAL" or "NO_DEAL"
     final_price: Optional[float] = None
     transcript_summary: Optional[str] = None
+
+class AnalyticsSummary(BaseModel):
+    total_sessions: int
+    total_deals: int
+    total_volume: float   # Total value of all deals
+    average_price: float
