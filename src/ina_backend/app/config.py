@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     CORS_ORIGINS: str | None = "*"
+    REDIS_URL: str | None='redis://localhost:6379'
 
     class Config:
         env_file = ".env"

@@ -7,7 +7,9 @@ from ..database import get_db
 
 router = APIRouter()
 
-@router.post("/register", response_model=schemas.Token)
+import secrets
+
+@router.post("/register", response_model=schemas.AuthResponse)
 async def register(payload: schemas.TenantCreate, db: AsyncSession = Depends(get_db)):
     stmt = select(models.Tenant).where(models.Tenant.email == payload.email)
     result = await db.execute(stmt)
@@ -16,10 +18,14 @@ async def register(payload: schemas.TenantCreate, db: AsyncSession = Depends(get
         raise HTTPException(status_code=400, detail="Email already registered")
 
     hashed_pw = auth.hash_password(payload.password)
+    # Generate API key immediately
+    new_api_key = f"ina_key_{secrets.token_hex(16)}"
+    
     new_tenant = models.Tenant(
         email=payload.email,
         password_hash=hashed_pw,
-        client_policy_api_endpoint=payload.client_policy_api_endpoint
+        client_policy_api_endpoint=payload.client_policy_api_endpoint,
+        client_api_key=new_api_key
     )
 
     db.add(new_tenant)
@@ -27,10 +33,15 @@ async def register(payload: schemas.TenantCreate, db: AsyncSession = Depends(get
     await db.refresh(new_tenant)
 
     token = auth.create_access_token({"sub": str(new_tenant.id)})
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token, 
+        "token_type": "bearer",
+        "tenant_id": new_tenant.id,
+        "api_key": new_tenant.client_api_key
+    }
 
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=schemas.AuthResponse)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     # OAuth2PasswordRequestForm provides 'username' and 'password'
     stmt = select(models.Tenant).where(models.Tenant.email == form_data.username)
@@ -43,5 +54,17 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
             detail="Invalid credentials"
         )
 
+    # Backfill API key if missing
+    if not tenant.client_api_key:
+        tenant.client_api_key = f"ina_key_{secrets.token_hex(16)}"
+        db.add(tenant)
+        await db.commit()
+        await db.refresh(tenant)
+
     token = auth.create_access_token({"sub": str(tenant.id)})
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token, 
+        "token_type": "bearer",
+        "tenant_id": tenant.id,
+        "api_key": tenant.client_api_key
+    }
