@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional
 
 class TenantCreate(BaseModel):
     email: EmailStr
@@ -45,3 +46,10 @@ class SessionInitRequest(BaseModel):
 class SessionInitResponse(BaseModel):
     session_id: str        # We return our generated Session ID
     status: str
+
+
+class AnalyticsLogCreate(BaseModel):
+    session_id: str
+    result: str           # e.g., "DEAL" or "NO_DEAL"
+    final_price: Optional[float] = None
+    transcript_summary: Optional[str] = None
