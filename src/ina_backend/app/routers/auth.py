@@ -4,6 +4,8 @@ from sqlalchemy import select
 from fastapi.security import OAuth2PasswordRequestForm
 from .. import schemas, models, auth
 from ..database import get_db
+from fastapi_limiter.depends import RateLimiter
+
 
 router = APIRouter()
 
@@ -41,7 +43,7 @@ async def register(payload: schemas.TenantCreate, db: AsyncSession = Depends(get
     }
 
 
-@router.post("/login", response_model=schemas.AuthResponse)
+@router.post("/login", response_model=schemas.AuthResponse, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
     # OAuth2PasswordRequestForm provides 'username' and 'password'
     stmt = select(models.Tenant).where(models.Tenant.email == form_data.username)

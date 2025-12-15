@@ -3,8 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import settings
 from .routers import auth, policy, tenant_config, session, analytics
 
+from fastapi_limiter import FastAPILimiter
+from fastapi_limiter.depends import RateLimiter
+
 import asyncio
 from .database import engine, Base
+
+from .redis_client import redis_client
 
 app = FastAPI(title="INA Backend")
 
@@ -20,6 +25,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+async def startup():
+    # This connects the limiter to Redis when the app boots up
+    await FastAPILimiter.init(redis_client)
 
 # No need after almebic
 #

@@ -7,12 +7,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from src.ina_backend.app.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models import Tenant
+from fastapi_limiter.depends import RateLimiter
+
 
 
 router = APIRouter()
 
 # --- NEW ENDPOINT: Week 3 Day 1 ---
-@router.post("/init", response_model=SessionInitResponse)
+@router.post("/init", response_model=SessionInitResponse, dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def initialize_session(
     payload: SessionInitRequest, 
     db: AsyncSession = Depends(get_db)
